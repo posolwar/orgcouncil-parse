@@ -62,18 +62,18 @@ func isZipLine(value string, lenValue int) bool {
 
 func isMonth(value string, lenValue int) bool {
 	if lenValue > 8 {
-		return strings.HasPrefix(value, "January") ||
-			strings.HasPrefix(value, "February") ||
-			strings.HasPrefix(value, "March") ||
-			strings.HasPrefix(value, "April") ||
-			strings.HasPrefix(value, "May") ||
-			strings.HasPrefix(value, "June") ||
-			strings.HasPrefix(value, "July") ||
-			strings.HasPrefix(value, "August") ||
-			strings.HasPrefix(value, "September") ||
-			strings.HasPrefix(value, "October") ||
-			strings.HasPrefix(value, "November") ||
-			strings.HasPrefix(value, "December")
+		return strings.HasPrefix(value, "january") ||
+			strings.HasPrefix(value, "february") ||
+			strings.HasPrefix(value, "march") ||
+			strings.HasPrefix(value, "april") ||
+			strings.HasPrefix(value, "may") ||
+			strings.HasPrefix(value, "june") ||
+			strings.HasPrefix(value, "july") ||
+			strings.HasPrefix(value, "august") ||
+			strings.HasPrefix(value, "september") ||
+			strings.HasPrefix(value, "october") ||
+			strings.HasPrefix(value, "november") ||
+			strings.HasPrefix(value, "december")
 	}
 
 	return false
