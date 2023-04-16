@@ -8,6 +8,7 @@ func Filtration(fieldName, fieldValue string) bool {
 	return false
 }
 
+// Фильтрация конвеера
 func FilteredConveer(ctx context.Context, filterParams map[string]string, in <-chan CompanyDetailedInfo) <-chan CompanyDetailedInfo {
 	out := make(chan CompanyDetailedInfo)
 

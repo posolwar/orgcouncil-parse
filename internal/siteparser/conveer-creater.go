@@ -12,9 +12,11 @@ import (
 func CreateConveer(ctx context.Context, csv *csv.Writer, channelsCount int) {
 	var wg sync.WaitGroup
 
+	// Это каналы, который работают с небольшим кол-вом информации
 	stateCh := orgcouncil.StateConveer(ctx)
 	cityCh := orgcouncil.CityConveer(ctx, stateCh)
 
+	// Каналы, который работают с большим кол-во информации
 	for i := 0; i < channelsCount; i++ {
 		companyCh := orgcouncil.CompanyConveer(ctx, cityCh)
 		detailedCh := orgcouncil.CompanyDetailedConveer(ctx, companyCh)

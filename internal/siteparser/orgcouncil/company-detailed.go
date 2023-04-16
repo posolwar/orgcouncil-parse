@@ -5,11 +5,13 @@ import (
 
 	"github.com/gocolly/colly"
 
+	"github.com/posolwar/orgcouncil-parse/internal/helpers"
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/collector"
 )
 
 type CompanyDetailedInfo map[string]string
 
+// Получение детальной информации о компаниях
 func CompanyDetailedConveer(ctx context.Context, in <-chan CompanyProfileInfo) <-chan CompanyDetailedInfo {
 	c := collector.NewCollector()
 
@@ -25,7 +27,7 @@ func CompanyDetailedConveer(ctx context.Context, in <-chan CompanyProfileInfo) <
 		for city := range in {
 			c.Visit(city.URL)
 
-			CounterAdd()
+			helpers.CounterAdd()
 			out <- detailedCompany
 		}
 

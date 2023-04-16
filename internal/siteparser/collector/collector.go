@@ -5,6 +5,7 @@ import (
 	"github.com/posolwar/orgcouncil-parse/internal/helpers"
 )
 
+// Клиент, который будет ходить по сайту
 func NewCollector() *colly.Collector {
 	return colly.NewCollector(
 		colly.AllowedDomains(helpers.OrgAllowedDomain),

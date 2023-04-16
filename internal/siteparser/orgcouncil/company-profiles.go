@@ -13,6 +13,7 @@ type CompanyProfileInfo struct {
 	URL string
 }
 
+// Получение краткой информации о компаниях
 func CompanyConveer(ctx context.Context, in <-chan CityInfo) <-chan CompanyProfileInfo {
 	c := collector.NewCollector()
 

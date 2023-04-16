@@ -14,6 +14,7 @@ type StateInfo struct {
 	URL  string
 }
 
+// Конвеер для получения информации по штатам
 func StateConveer(ctx context.Context) <-chan StateInfo {
 	c := collector.NewCollector()
 
