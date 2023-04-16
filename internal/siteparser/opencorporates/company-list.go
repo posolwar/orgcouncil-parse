@@ -25,19 +25,19 @@ func CompanyListConveer(ctx context.Context, in <-chan orgcouncil.CompanyDetaile
 	go func() {
 		detailedCompany := OpenCorporateCompanyLink{}
 
-		c.OnHTML(".search-result", func(e *colly.HTMLElement) {
+		c.OnHTML(".company_search_result", func(e *colly.HTMLElement) {
 			detailedCompany.URL = append(detailedCompany.URL, e.Request.AbsoluteURL(e.ChildAttr(".company_search_result", "href")))
 		})
 
 		for city := range in {
 			if orgName, ok := city[helpers.HeaderOrganizationName]; ok {
 				detailedCompany.Info = city
-				c.Visit(opencorporateLinkGenerator(orgName))
+				generatedLink := opencorporateLinkGenerator(orgName)
+
+				c.Visit(generatedLink)
 			}
 
-			if len(detailedCompany.URL) > 0 {
-				out <- detailedCompany
-			}
+			out <- detailedCompany
 		}
 
 		close(out)

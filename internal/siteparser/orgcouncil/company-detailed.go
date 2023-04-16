@@ -57,7 +57,7 @@ func CompanyDetailedConveer(ctx context.Context, in <-chan CompanyProfileInfo) <
 }
 
 func isZipLine(value string, lenValue int) bool {
-	return lenValue > 3 && value[0:3] == "All"
+	return lenValue > 3 && value[0:3] == "all"
 }
 
 func isMonth(value string, lenValue int) bool {

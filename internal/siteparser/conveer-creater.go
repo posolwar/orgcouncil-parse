@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"sync"
 
+	"github.com/posolwar/orgcouncil-parse/internal/siteparser/opencorporates"
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/orgcouncil"
 	"github.com/sirupsen/logrus"
 )
@@ -21,9 +22,11 @@ func CreateConveer(ctx context.Context, csv *csv.Writer, channelsCount int, filt
 		companyCh := orgcouncil.CompanyConveer(ctx, cityCh)
 		detailedCh := orgcouncil.CompanyDetailedConveer(ctx, companyCh)
 		fileteredCh := orgcouncil.FilteredConveer(ctx, filter, detailedCh)
+		openCorpListCh := opencorporates.CompanyListConveer(ctx, fileteredCh)
+		openCorpDetailCh := opencorporates.CompanyDetailConveer(ctx, openCorpListCh)
 
 		wg.Add(1)
-		go toCsvWrite(csv, &wg, fileteredCh)
+		go toCsvWrite(csv, &wg, openCorpDetailCh)
 	}
 
 	wg.Wait()

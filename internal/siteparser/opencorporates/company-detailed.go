@@ -1,31 +1,84 @@
 package opencorporates
 
-// // Получение детальной информации о компаниях в opencorporates
-// func CompanyDetailConveer(ctx context.Context, in <-chan OpenCorporateCompanyLink) <-chan orgcouncil.CompanyDetailedInfo {
-// 	c := collector.NewCollector()
+import (
+	"context"
+	"strings"
 
-// 	out := make(chan orgcouncil.CompanyDetailedInfo)
+	"github.com/gocolly/colly"
+	"github.com/posolwar/orgcouncil-parse/internal/helpers"
+	"github.com/posolwar/orgcouncil-parse/internal/siteparser/collector"
+	"github.com/posolwar/orgcouncil-parse/internal/siteparser/orgcouncil"
+)
 
-// 	go func() {
-// 		detailedCompany := OpenCorporateCompanyLink{}
+// Получение детальной информации о компаниях в opencorporates
+func CompanyDetailConveer(ctx context.Context, in <-chan OpenCorporateCompanyLink) <-chan orgcouncil.CompanyDetailedInfo {
+	c := collector.NewCollector()
 
-// 		c.OnHTML(".search-result", func(e *colly.HTMLElement) {
-// 			detailedCompany.URL = append(detailedCompany.URL, e.Request.AbsoluteURL(e.ChildAttr(".company_search_result", "href")))
-// 		})
+	out := make(chan orgcouncil.CompanyDetailedInfo)
 
-// 		for CompanyLink := range in {
-// 			if orgName, ok := CompanyLink.Info[helpers.OrganizationName]; ok {
-// 				detailedCompany.Info = CompanyLink
-// 				c.Visit(opencorporateLinkGenerator(orgName))
-// 			}
+	go func() {
+		var detailedCompany map[string]string
 
-// 			if detailedCompany.URL != "" {
-// 				out <- detailedCompany
-// 			}
-// 		}
+		zipConfirmed := false
 
-// 		close(out)
-// 	}()
+		c.OnHTML(".registered_address", func(e *colly.HTMLElement) {
+			address := e.Text
 
-// 	return out
-// }
+			if strings.Contains(address, detailedCompany[helpers.HeaderZip]) {
+				zipConfirmed = true
+			}
+		})
+
+		c.OnHTML(".incorporation_date", func(e *colly.HTMLElement) {
+			detailedCompany[helpers.HeaderIncorporationDate] = strings.ToLower(e.Text)
+		})
+
+		c.OnHTML(".company_type", func(e *colly.HTMLElement) {
+			detailedCompany[helpers.HeaderCompanyType] = strings.ToLower(e.Text)
+		})
+
+		c.OnHTML(".jurisdiction", func(e *colly.HTMLElement) {
+			detailedCompany[helpers.HeaderJurisdiction] = strings.ToLower(e.Text)
+		})
+
+		c.OnHTML(".agent_name", func(e *colly.HTMLElement) {
+			detailedCompany[helpers.HeaderAgentName] = strings.ToLower(e.Text)
+		})
+
+		c.OnHTML(".agent_address", func(e *colly.HTMLElement) {
+			detailedCompany[helpers.HeaderAgentAddress] = strings.ToLower(e.Text)
+		})
+
+		c.OnHTML(".trunc8", func(e *colly.HTMLElement) {
+			detailedCompany[helpers.HeaderDirectors] = strings.ToLower(e.Text)
+		})
+
+		c.OnHTML(".registry_page", func(e *colly.HTMLElement) {
+			detailedCompany[helpers.HeaderRegistryPage] = strings.ToLower(e.Text)
+		})
+
+		for companyInfo := range in {
+			detailedCompany = companyInfo.Info
+
+			if len(companyInfo.URL) == 0 {
+				detailedCompany[helpers.HeaderOpencorporatesLink] = helpers.OpenCorporateCompanyLinkError
+
+				out <- detailedCompany
+			}
+
+			for _, url := range companyInfo.URL {
+				detailedCompany[helpers.HeaderOpencorporatesLink] = url
+
+				c.Visit(url)
+
+				if zipConfirmed {
+					out <- detailedCompany
+				}
+			}
+		}
+
+		close(out)
+	}()
+
+	return out
+}
