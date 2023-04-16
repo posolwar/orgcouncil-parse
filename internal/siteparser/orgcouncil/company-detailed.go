@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/gocolly/colly"
-	"github.com/posolwar/orgcouncil-parse/internal/helpers"
 
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/collector"
 )
@@ -16,10 +15,6 @@ func CompanyDetailedConveer(ctx context.Context, in <-chan CompanyProfileInfo) <
 
 	out := make(chan CompanyDetailedInfo)
 
-	i := 0
-
-	go helpers.Counter("detail", &i)
-
 	go func() {
 		detailedCompany := make(CompanyDetailedInfo)
 
@@ -30,9 +25,8 @@ func CompanyDetailedConveer(ctx context.Context, in <-chan CompanyProfileInfo) <
 		for city := range in {
 			c.Visit(city.URL)
 
+			CounterAdd()
 			out <- detailedCompany
-
-			i++
 		}
 
 		close(out)

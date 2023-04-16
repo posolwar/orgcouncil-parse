@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/gocolly/colly"
-	"github.com/posolwar/orgcouncil-parse/internal/helpers"
 
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/collector"
 )
@@ -19,15 +18,8 @@ func CompanyConveer(ctx context.Context, in <-chan CityInfo) <-chan CompanyProfi
 
 	out := make(chan CompanyProfileInfo)
 
-	i := 0
-
-	go helpers.Counter("profile", &i)
-
 	go func() {
 		c.OnHTML(".table-condensed2 > tbody > tr", func(e *colly.HTMLElement) {
-
-			i++
-
 			profile := CompanyProfileInfo{}
 			profile.URL = e.Request.AbsoluteURL(e.ChildAttr("td > a", "href"))
 			profile.ID = e.ChildText(".nowrap")

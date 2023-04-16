@@ -29,7 +29,6 @@ func CreateConveer(ctx context.Context, csv *csv.Writer, channelsCount int) {
 
 func toCsvWrite(csv *csv.Writer, wg *sync.WaitGroup, ch <-chan orgcouncil.CompanyDetailedInfo) {
 	for detailedInfo := range ch {
-		logrus.Print(detailedInfo["Organization Name"])
 		csv.Write([]string{"--------------------------------"})
 		for name, value := range detailedInfo {
 			err := csv.Write([]string{name, value})

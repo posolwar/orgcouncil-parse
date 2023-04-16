@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"runtime"
 
@@ -9,7 +10,17 @@ import (
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/csvcreater"
 )
 
+var CountOfChannels int
+
+func init() {
+	flag.IntVar(&CountOfChannels, "channels", 1, "кол-во используемых каналов")
+}
+
 func main() {
+	flag.Parse()
+
+	log.Println("Кол-во запущенных горутин: ", runtime.NumCPU()*CountOfChannels)
+
 	ctx := context.Background()
 
 	csv, file, err := csvcreater.CreateCsv("out")
@@ -19,7 +30,7 @@ func main() {
 
 	defer file.Close()
 
-	siteparser.CreateConveer(ctx, csv, runtime.NumCPU()*5)
+	siteparser.CreateConveer(ctx, csv, runtime.NumCPU()*CountOfChannels)
 }
 
 //56
