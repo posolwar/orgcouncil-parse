@@ -6,9 +6,8 @@ import (
 )
 
 func NewCollector() *colly.Collector {
-	c := colly.NewCollector(
+	return colly.NewCollector(
 		colly.AllowedDomains(helpers.OrgAllowedDomain),
+		// colly.Async(true),
 	)
-
-	return c
 }

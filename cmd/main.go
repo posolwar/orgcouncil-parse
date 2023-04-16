@@ -19,7 +19,7 @@ func main() {
 
 	defer file.Close()
 
-	siteparser.CreateConveer(ctx, csv, runtime.NumCPU())
+	siteparser.CreateConveer(ctx, csv, runtime.NumCPU()*5)
 }
 
 //56

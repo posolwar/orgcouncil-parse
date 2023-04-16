@@ -21,21 +21,23 @@ func CreateConveer(ctx context.Context, csv *csv.Writer, channelsCount int) {
 		fileteredCh := orgcouncil.FilteredConveer(ctx, map[string]string{"NTEE Code": "T11"}, detailedCh)
 
 		wg.Add(1)
-		go func() {
-			for detailedInfo := range fileteredCh {
-				logrus.Print(detailedInfo["Organization Name"])
-				csv.Write([]string{"--------------------------------"})
-				for name, value := range detailedInfo {
-					err := csv.Write([]string{name, value})
-					if err != nil {
-						logrus.Errorf("name: %s, key %s, err: %s", name, value, err.Error())
-					}
-				}
-			}
-
-			wg.Done()
-		}()
+		go toCsvWrite(csv, &wg, fileteredCh)
 	}
 
 	wg.Wait()
+}
+
+func toCsvWrite(csv *csv.Writer, wg *sync.WaitGroup, ch <-chan orgcouncil.CompanyDetailedInfo) {
+	for detailedInfo := range ch {
+		logrus.Print(detailedInfo["Organization Name"])
+		csv.Write([]string{"--------------------------------"})
+		for name, value := range detailedInfo {
+			err := csv.Write([]string{name, value})
+			if err != nil {
+				logrus.Errorf("name: %s, key %s, err: %s", name, value, err.Error())
+			}
+		}
+	}
+
+	wg.Done()
 }
