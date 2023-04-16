@@ -5,6 +5,7 @@ import (
 
 	"github.com/posolwar/orgcouncil-parse/internal/helpers"
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/collector"
+	"github.com/sirupsen/logrus"
 
 	"github.com/gocolly/colly"
 )
@@ -30,7 +31,11 @@ func StateConveer(ctx context.Context) <-chan StateInfo {
 			}
 		})
 
-		c.Visit(helpers.AddressOrgCouncil)
+		err := c.Visit(helpers.AddressOrgCouncil)
+		if err != nil {
+			logrus.Error(err)
+			ctx.Done()
+		}
 
 		close(stateOutCh)
 	}()

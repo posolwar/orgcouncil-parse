@@ -14,16 +14,16 @@ func FilteredConveer(ctx context.Context, filterParams map[string]string, in <-c
 
 	go func() {
 		for detailInfo := range in {
-			var skipThisInfo bool
+			var skipThisDetailed bool
 
 			for paramName, paramValue := range filterParams {
 				if detailInfo[paramName] != paramValue {
-					skipThisInfo = true
+					skipThisDetailed = true
 					break
 				}
 			}
 
-			if skipThisInfo {
+			if skipThisDetailed {
 				continue
 			}
 

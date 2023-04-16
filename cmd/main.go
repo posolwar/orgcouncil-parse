@@ -30,7 +30,7 @@ func main() {
 
 	defer file.Close()
 
-	siteparser.CreateConveer(ctx, csv, runtime.NumCPU()*CountOfChannels)
+	siteparser.CreateConveer(ctx, csv, runtime.NumCPU()*CountOfChannels, map[string]string{"ntee code": "t11"})
 }
 
 //56
