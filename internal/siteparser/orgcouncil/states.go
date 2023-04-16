@@ -1,7 +1,10 @@
 package orgcouncil
 
 import (
+	"context"
+
 	"github.com/posolwar/orgcouncil-parse/internal/helpers"
+	"github.com/posolwar/orgcouncil-parse/internal/siteparser/collector"
 
 	"github.com/gocolly/colly"
 )
@@ -11,15 +14,25 @@ type StateInfo struct {
 	URL  string
 }
 
-func StateConveer(out chan<- StateInfo, c *colly.Collector) {
-	c.OnHTML(".table-condensed2 > tbody > tr > td", func(e *colly.HTMLElement) {
-		link := e.Request.AbsoluteURL(e.ChildAttr("a", "href"))
-		text := e.Text
+func StateConveer(ctx context.Context) <-chan StateInfo {
+	c := collector.NewCollector()
 
-		if text != "" {
-			out <- StateInfo{Name: text, URL: link}
-		}
-	})
+	stateOutCh := make(chan StateInfo)
 
-	c.Visit(helpers.AddressOrgCouncil)
+	go func() {
+		c.OnHTML(".table-condensed2 > tbody > tr", func(e *colly.HTMLElement) {
+			link := e.Request.AbsoluteURL(e.ChildAttr("td > a", "href"))
+			text := e.Text
+
+			if text != "" {
+				stateOutCh <- StateInfo{Name: text, URL: link}
+			}
+		})
+
+		c.Visit(helpers.AddressOrgCouncil)
+
+		close(stateOutCh)
+	}()
+
+	return stateOutCh
 }

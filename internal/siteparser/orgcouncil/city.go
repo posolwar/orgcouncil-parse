@@ -1,9 +1,12 @@
 package orgcouncil
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/gocolly/colly"
+	"github.com/posolwar/orgcouncil-parse/internal/helpers"
+	"github.com/posolwar/orgcouncil-parse/internal/siteparser/collector"
 )
 
 type CityInfo struct {
@@ -13,22 +16,37 @@ type CityInfo struct {
 }
 
 // Получаем штат, отдаем информацию о городе
-func CityConveer(in chan StateInfo, out chan CityInfo, c *colly.Collector) {
-	defer close(in)
+func CityConveer(ctx context.Context, in <-chan StateInfo) <-chan CityInfo {
+	c := collector.NewCollector()
 
-	c.OnHTML(".table-condensed2 > tbody > tr", func(e *colly.HTMLElement) {
-		city := CityInfo{}
+	cityInfoOut := make(chan CityInfo)
 
-		rawCount := e.ChildText(".ar")
-		city.Count, _ = strconv.Atoi(rawCount)
+	i := 0
 
-		city.URL = e.Request.AbsoluteURL(e.ChildAttr("td > a", "href"))
-		city.CityName = e.ChildText("td > a")
+	go helpers.Counter("city", &i)
 
-		out <- city
-	})
+	go func() {
+		c.OnHTML(".table-condensed2 > tbody > tr", func(e *colly.HTMLElement) {
+			city := CityInfo{}
 
-	for state := range in {
-		c.Visit(state.URL)
-	}
+			rawCount := e.ChildText(".ar")
+			city.Count, _ = strconv.Atoi(rawCount)
+
+			city.URL = e.Request.AbsoluteURL(e.ChildAttr("td > a", "href"))
+			city.CityName = e.ChildText("td > a")
+
+			if city.CityName != "" {
+				cityInfoOut <- city
+			}
+		})
+
+		for state := range in {
+			c.Visit(state.URL)
+			i++
+		}
+
+		close(cityInfoOut)
+	}()
+
+	return cityInfoOut
 }

@@ -1,29 +1,53 @@
 package orgcouncil
 
-import "github.com/gocolly/colly"
+import (
+	"context"
+
+	"github.com/gocolly/colly"
+	"github.com/posolwar/orgcouncil-parse/internal/helpers"
+
+	"github.com/posolwar/orgcouncil-parse/internal/siteparser/collector"
+)
 
 type CompanyProfileInfo struct {
 	ID  string
 	URL string
 }
 
-func CompanyConveer(in chan *CityInfo, out chan *CompanyProfileInfo, c *colly.Collector) {
-	defer close(in)
+func CompanyConveer(ctx context.Context, in <-chan CityInfo) <-chan CompanyProfileInfo {
+	c := collector.NewCollector()
 
-	c.OnHTML(".table-condensed2 > tbody > tr", func(e *colly.HTMLElement) {
-		profile := CompanyProfileInfo{}
-		profile.URL = e.Request.AbsoluteURL(e.ChildAttr("td > a", "href"))
-		profile.ID = e.ChildText(".nowrap")
+	out := make(chan CompanyProfileInfo)
 
-		out <- &profile
-	})
+	i := 0
 
-	c.OnHTML(".ac > .pagination > liL", func(e *colly.HTMLElement) {
+	go helpers.Counter("profile", &i)
 
-	})
+	go func() {
+		c.OnHTML(".table-condensed2 > tbody > tr", func(e *colly.HTMLElement) {
 
-	for city := range in {
-		c.Visit(city.URL)
-	}
+			i++
 
+			profile := CompanyProfileInfo{}
+			profile.URL = e.Request.AbsoluteURL(e.ChildAttr("td > a", "href"))
+			profile.ID = e.ChildText(".nowrap")
+
+			if profile.ID != "" {
+				out <- profile
+			}
+		})
+
+		c.OnHTML(".ac > .pagination > li:last-child", func(e *colly.HTMLElement) {
+			link := e.Request.AbsoluteURL(e.ChildAttr("a", "href"))
+			c.Visit(link)
+		})
+
+		for city := range in {
+			c.Visit(city.URL)
+		}
+
+		close(out)
+	}()
+
+	return out
 }

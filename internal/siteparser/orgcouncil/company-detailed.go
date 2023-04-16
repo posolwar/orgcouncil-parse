@@ -1,21 +1,42 @@
 package orgcouncil
 
-import "github.com/gocolly/colly"
+import (
+	"context"
+
+	"github.com/gocolly/colly"
+	"github.com/posolwar/orgcouncil-parse/internal/helpers"
+
+	"github.com/posolwar/orgcouncil-parse/internal/siteparser/collector"
+)
 
 type CompanyDetailedInfo map[string]string
 
-func CompanyDetailedConveer(in chan *CompanyProfileInfo, c *colly.Collector) <-chan CompanyDetailedInfo {
-	defer close(in)
+func CompanyDetailedConveer(ctx context.Context, in <-chan CompanyProfileInfo) <-chan CompanyDetailedInfo {
+	c := collector.NewCollector()
 
-	c.OnHTML(".table-condensed2 > tbody > tr", func(e *colly.HTMLElement) {
-		profile := CompanyProfileInfo{}
-		profile.URL = e.Request.AbsoluteURL(e.ChildAttr("td > a", "href"))
-		profile.ID = e.ChildText(".nowrap")
+	out := make(chan CompanyDetailedInfo)
 
-		out <- &profile
-	})
+	i := 0
 
-	for city := range in {
-		c.Visit(city.URL)
-	}
+	go helpers.Counter("detail", &i)
+
+	go func() {
+		detailedCompany := make(CompanyDetailedInfo)
+
+		c.OnHTML(".table-condensed2 > tbody > tr", func(e *colly.HTMLElement) {
+			detailedCompany[e.ChildText("th")] = e.ChildText("td")
+		})
+
+		for city := range in {
+			c.Visit(city.URL)
+
+			out <- detailedCompany
+
+			i++
+		}
+
+		close(out)
+	}()
+
+	return out
 }

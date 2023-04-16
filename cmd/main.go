@@ -1,14 +1,16 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
+	"context"
+	"log"
+	"runtime"
 
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser"
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/csvcreater"
 )
 
 func main() {
-	collector := siteparser.NewCollector("www.orgcouncil.com")
+	ctx := context.Background()
 
 	csv, file, err := csvcreater.CreateCsv("out")
 	if err != nil {
@@ -17,19 +19,7 @@ func main() {
 
 	defer file.Close()
 
-	parserPool := siteparser.NewParsePool()
-
-	// states, err := orgcouncil.GetStates(collector, "https://www.orgcouncil.com/")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// cities, err := orgcouncil.GetStatesOrganizations(states, collector)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// log.Println(cities)
+	siteparser.CreateConveer(ctx, csv, runtime.NumCPU())
 }
 
 //56
