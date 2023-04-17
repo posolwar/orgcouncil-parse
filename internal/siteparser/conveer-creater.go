@@ -11,11 +11,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func CreateConveer(ctx context.Context, csv *csv.Writer, channelsCount int, filter map[string]string) {
+func CreateConveer(ctx context.Context, stateFilter map[string]struct{}, csv *csv.Writer, channelsCount int, filter map[string]string) {
 	var wg sync.WaitGroup
 
 	// Это каналы, который работают с небольшим кол-вом информации
-	stateCh := orgcouncil.StateConveer(ctx)
+	stateCh := orgcouncil.StateConveer(ctx, stateFilter)
 	cityCh := orgcouncil.CityConveer(ctx, stateCh)
 
 	// Каналы, который работают с большим кол-во информации
