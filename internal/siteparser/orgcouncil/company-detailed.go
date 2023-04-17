@@ -37,7 +37,11 @@ func CompanyDetailedConveer(ctx context.Context, in <-chan CompanyProfileInfo) <
 				}
 
 				if isMonth(value, lenValue) {
-					detailedCompany[helpers.HeaderTaxPeriodAssetIncomeRevenue] = detailedCompany[helpers.HeaderTaxPeriodAssetIncomeRevenue] + "\n" + value
+					if detailedCompany[helpers.HeaderTaxPeriodAssetIncomeRevenue] == "" {
+						detailedCompany[helpers.HeaderTaxPeriodAssetIncomeRevenue] = value
+					} else {
+						detailedCompany[helpers.HeaderTaxPeriodAssetIncomeRevenue] = detailedCompany[helpers.HeaderTaxPeriodAssetIncomeRevenue] + "\n" + value
+					}
 				}
 			}
 		})
