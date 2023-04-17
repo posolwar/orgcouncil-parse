@@ -16,18 +16,31 @@ type StateInfo struct {
 }
 
 // Конвеер для получения информации по штатам
-func StateConveer(ctx context.Context) <-chan StateInfo {
+func StateConveer(ctx context.Context, filtredStates map[string]struct{}) <-chan StateInfo {
 	c := collector.NewCollector()
 
 	stateOutCh := make(chan StateInfo)
 
 	go func() {
-		c.OnHTML(".table-condensed2 > tbody > tr", func(e *colly.HTMLElement) {
-			link := e.Request.AbsoluteURL(e.ChildAttr("td > a", "href"))
-			text := e.Text
+		var isFiltered bool
 
-			if text != "" {
-				stateOutCh <- StateInfo{Name: text, URL: link}
+		// Записываем что фильтрация нужна или нет
+		if len(filtredStates) > 1 {
+			isFiltered = true
+		}
+
+		c.OnHTML(".table-condensed2 > tbody > tr", func(e *colly.HTMLElement) {
+			stateLink := e.Request.AbsoluteURL(e.ChildAttr("td > a", "href"))
+			stateName := e.Text
+
+			if isFiltered {
+				if _, stateFound := filtredStates[stateName]; stateFound {
+					stateOutCh <- StateInfo{Name: stateName, URL: stateLink}
+				}
+			} else {
+				if stateName != "" {
+					stateOutCh <- StateInfo{Name: stateName, URL: stateLink}
+				}
 			}
 		})
 
