@@ -3,6 +3,7 @@ package siteparser
 import (
 	"context"
 	"encoding/csv"
+	"sort"
 	"sync"
 
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/opencorporates"
@@ -35,10 +36,20 @@ func CreateConveer(ctx context.Context, csv *csv.Writer, channelsCount int, filt
 func toCsvWrite(csv *csv.Writer, wg *sync.WaitGroup, ch <-chan orgcouncil.CompanyDetailedInfo) {
 	for detailedInfo := range ch {
 		csv.Write([]string{"--------------------------------"})
+		slice := make([][]string, 0, len(detailedInfo))
+
 		for name, value := range detailedInfo {
-			err := csv.Write([]string{name, value})
+			slice = append(slice, []string{name, value})
+		}
+
+		sort.Slice(slice, func(i, j int) bool {
+			return slice[i][0] < slice[j][0]
+		})
+
+		for _, sliceValue := range slice {
+			err := csv.Write(sliceValue)
 			if err != nil {
-				logrus.Errorf("name: %s, key %s, err: %s", name, value, err.Error())
+				logrus.Errorf("value %v, err: %s", sliceValue, err.Error())
 			}
 		}
 	}
