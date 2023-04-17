@@ -11,6 +11,7 @@ import (
 
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser"
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/csvcreater"
+	"github.com/posolwar/orgcouncil-parse/internal/siteparser/filters"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,7 +24,7 @@ var (
 )
 
 func init() {
-	flag.IntVar(&CountOfChannels, "channels", 5, "Кол-во используемых каналов * кол-во ядер. Чем выше, тем больше нагрузка на проц.")
+	flag.IntVar(&CountOfChannels, "channels", 5, "Кол-во используемых циклов, число также умножается на кол-во ядер. Чем выше, тем больше нагрузка на проц.")
 
 	flag.StringVar(&CsvComma, "csv-comma", ":", "Разделитель, используемый для csv.")
 	flag.StringVar(&OutFileName, "out-file-name", "out", "Имя файла, который будет создан для перечисления ответов.")
@@ -39,7 +40,7 @@ func main() {
 		logrus.Fatal(err.Error())
 	}
 
-	log.Println("Кол-во запущенных горутин: ", runtime.NumCPU()*CountOfChannels)
+	log.Println("Кол-во запущенных циклов: ", runtime.NumCPU()*CountOfChannels)
 
 	ctx := context.Background()
 
@@ -50,9 +51,14 @@ func main() {
 
 	defer file.Close()
 
+	paramFilter, err := filters.GetFiltersFromFile(FilterFilePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	stateFilter := getStateFilter(States)
 
-	siteparser.CreateConveer(ctx, stateFilter, csv, runtime.NumCPU()*CountOfChannels, map[string]string{"ntee code": "t11"})
+	siteparser.CreateConveer(ctx, stateFilter, paramFilter, csv, runtime.NumCPU()*CountOfChannels)
 }
 
 // Получаем список штатов для ограничения поиска

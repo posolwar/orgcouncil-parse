@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func CreateConveer(ctx context.Context, stateFilter map[string]struct{}, csv *csv.Writer, channelsCount int, filter map[string]string) {
+func CreateConveer(ctx context.Context, stateFilter map[string]struct{}, paramFilter map[string]string, csv *csv.Writer, channelsCount int) {
 	var wg sync.WaitGroup
 
 	// Это каналы, который работают с небольшим кол-вом информации
@@ -22,7 +22,7 @@ func CreateConveer(ctx context.Context, stateFilter map[string]struct{}, csv *cs
 	for i := 0; i < channelsCount; i++ {
 		companyCh := orgcouncil.CompanyConveer(ctx, cityCh)
 		detailedCh := orgcouncil.CompanyDetailedConveer(ctx, companyCh)
-		fileteredCh := orgcouncil.FilteredConveer(ctx, filter, detailedCh)
+		fileteredCh := orgcouncil.FilteredConveer(ctx, paramFilter, detailedCh)
 		openCorpListCh := opencorporates.CompanyListConveer(ctx, fileteredCh)
 		openCorpDetailCh := opencorporates.CompanyDetailConveer(ctx, openCorpListCh)
 
