@@ -16,13 +16,14 @@ type StateInfo struct {
 }
 
 // Конвеер для получения информации по штатам
-func StateConveer(ctx context.Context, filtredStates map[string]struct{}) <-chan StateInfo {
+func StateConveer(ctx context.Context, directoryPath string, filtredStates map[string]struct{}) <-chan StateInfo {
 	c := collector.NewCollector()
 
 	stateOutCh := make(chan StateInfo)
 
 	go func() {
 		var isFiltered bool
+		var err error
 
 		// Записываем что фильтрация нужна или нет
 		if len(filtredStates) > 0 {
@@ -44,7 +45,7 @@ func StateConveer(ctx context.Context, filtredStates map[string]struct{}) <-chan
 			}
 		})
 
-		err := c.Visit(helpers.AddressOrgCouncil)
+		err = c.Visit(helpers.AddressOrgCouncil)
 		if err != nil {
 			logrus.Error(err)
 			ctx.Done()

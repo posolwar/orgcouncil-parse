@@ -2,40 +2,65 @@ package siteparser
 
 import (
 	"context"
-	"encoding/csv"
+	"runtime"
 	"sort"
 	"sync"
 
+	"github.com/posolwar/orgcouncil-parse/internal/siteparser/csvcreater"
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/opencorporates"
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/orgcouncil"
 	"github.com/sirupsen/logrus"
 )
 
-func CreateConveer(ctx context.Context, stateFilter map[string]struct{}, paramFilter map[string]string, csv *csv.Writer, channelsCount int) {
+func CreateConveer(ctx context.Context, dirPath string, stateFilter map[string]struct{}, paramFilter map[string]string, channelsCount int) {
 	var wg sync.WaitGroup
+	var outChannel = make(chan orgcouncil.CompanyDetailedInfo, runtime.NumCPU())
+
+	if err := csvcreater.CreateDir(dirPath); err != nil {
+		logrus.Errorf("ошибка создания каталога '%s', подробности: " + err.Error())
+		return
+	}
 
 	// Это каналы, который работают с небольшим кол-вом информации
-	stateCh := orgcouncil.StateConveer(ctx, stateFilter)
-	cityCh := orgcouncil.CityConveer(ctx, stateCh)
+	stateCh := orgcouncil.StateConveer(ctx, dirPath, stateFilter)
+	stateCh2, fileCh := FileCreateConveer(ctx, dirPath, stateCh)
+	cityCh := orgcouncil.CityConveer(ctx, stateCh2)
 
-	// Каналы, который работают с большим кол-во информации
 	for i := 0; i < channelsCount; i++ {
+		// Каналы, который работают с большим кол-во информации
 		companyCh := orgcouncil.CompanyConveer(ctx, cityCh)
 		detailedCh := orgcouncil.CompanyDetailedConveer(ctx, companyCh)
 		fileteredCh := orgcouncil.FilteredConveer(ctx, paramFilter, detailedCh)
 		openCorpListCh := opencorporates.CompanyListConveer(ctx, fileteredCh)
 		openCorpDetailCh := opencorporates.CompanyDetailConveer(ctx, openCorpListCh)
-
-		wg.Add(1)
-		go toCsvWrite(csv, &wg, openCorpDetailCh)
+		go ToOut(openCorpDetailCh, outChannel)
 	}
+
+	toCsvWrite2(channelsCount, &wg, fileCh, outChannel)
 
 	wg.Wait()
 }
 
-func toCsvWrite(csv *csv.Writer, wg *sync.WaitGroup, ch <-chan orgcouncil.CompanyDetailedInfo) {
+func ToOut(in <-chan orgcouncil.CompanyDetailedInfo, out chan<- orgcouncil.CompanyDetailedInfo) {
+	for inChan := range in {
+		out <- inChan
+	}
+}
+
+func toCsvWrite2(channelsCount int, wg *sync.WaitGroup, toWriteFile <-chan csvcreater.CsvToWrite, in <-chan orgcouncil.CompanyDetailedInfo) {
+	for fileForWriter := range toWriteFile {
+		wg.Add(1)
+		go toCsvWrite(fileForWriter, wg, in)
+	}
+}
+
+func toCsvWrite(fileToWrite csvcreater.CsvToWrite, wg *sync.WaitGroup, ch <-chan orgcouncil.CompanyDetailedInfo) {
+	defer fileToWrite.File.Close()
+	defer wg.Done()
+
 	for detailedInfo := range ch {
-		csv.Write([]string{"--------------------------------"})
+		fileToWrite.CsvWriter.Write([]string{"--------------------------------"})
+
 		slice := make([][]string, 0, len(detailedInfo))
 
 		for name, value := range detailedInfo {
@@ -47,12 +72,10 @@ func toCsvWrite(csv *csv.Writer, wg *sync.WaitGroup, ch <-chan orgcouncil.Compan
 		})
 
 		for _, sliceValue := range slice {
-			err := csv.Write(sliceValue)
+			err := fileToWrite.CsvWriter.Write(sliceValue)
 			if err != nil {
 				logrus.Errorf("value %v, err: %s", sliceValue, err.Error())
 			}
 		}
 	}
-
-	wg.Done()
 }

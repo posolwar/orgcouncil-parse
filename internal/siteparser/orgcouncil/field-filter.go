@@ -13,8 +13,14 @@ func FilteredConveer(ctx context.Context, filterParams map[string]string, in <-c
 	out := make(chan CompanyDetailedInfo)
 
 	go func() {
+		var isFiltred bool
+
+		if len(filterParams) > 0 {
+			isFiltred = true
+		}
+
 		for detailInfo := range in {
-			if len(filterParams) == 0 {
+			if !isFiltred {
 				out <- detailInfo
 				continue
 			}

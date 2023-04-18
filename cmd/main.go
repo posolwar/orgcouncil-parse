@@ -10,7 +10,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser"
-	"github.com/posolwar/orgcouncil-parse/internal/siteparser/csvcreater"
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/filters"
 	"github.com/sirupsen/logrus"
 )
@@ -20,14 +19,14 @@ var (
 	CsvComma        string
 	States          string
 	FilterFilePath  string
-	OutFileName     string
+	SaveDirectory   string
 )
 
 func init() {
 	flag.IntVar(&CountOfChannels, "channels", 5, "Кол-во используемых циклов, число также умножается на кол-во ядер. Чем выше, тем больше нагрузка на проц.")
 
 	flag.StringVar(&CsvComma, "csv-comma", ":", "Разделитель, используемый для csv.")
-	flag.StringVar(&OutFileName, "out-file-name", "out", "Имя файла, который будет создан для перечисления ответов.")
+	flag.StringVar(&SaveDirectory, "dir", "", "Директория для сохранения файла")
 	flag.StringVar(&FilterFilePath, "file", "", "Путь к файлу, содержащего параметры в формате json для фильтрации по ним.")
 
 	flag.StringVar(&States, "state", "", "Штат, используемый для поиска. Если не указан, то поиск выполняется по всем штатам. Можно указать несколько штатов через запятую.")
@@ -44,13 +43,6 @@ func main() {
 
 	ctx := context.Background()
 
-	csv, file, err := csvcreater.CreateCsv("out")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer file.Close()
-
 	paramFilter, err := filters.GetFiltersFromFile(FilterFilePath)
 	if err != nil {
 		log.Fatal(err)
@@ -58,7 +50,7 @@ func main() {
 
 	stateFilter := getStateFilter(States)
 
-	siteparser.CreateConveer(ctx, stateFilter, paramFilter, csv, runtime.NumCPU()*CountOfChannels)
+	siteparser.CreateConveer(ctx, SaveDirectory, stateFilter, paramFilter, runtime.NumCPU()*CountOfChannels)
 }
 
 // Получаем список штатов для ограничения поиска
@@ -90,7 +82,7 @@ func flagsValid() error {
 	}
 
 	// out file
-	if utf8.RuneCountInString(OutFileName) == 0 {
+	if utf8.RuneCountInString(SaveDirectory) == 0 {
 		return errors.New("вы не указали имя файла, в который будет выводиться ответ")
 	}
 

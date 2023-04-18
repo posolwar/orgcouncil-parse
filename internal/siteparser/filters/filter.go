@@ -2,8 +2,7 @@ package filters
 
 import (
 	"encoding/json"
-	"errors"
-	"io/ioutil"
+	"os"
 )
 
 func GetFiltersFromFile(path string) (map[string]string, error) {
@@ -11,7 +10,7 @@ func GetFiltersFromFile(path string) (map[string]string, error) {
 		return nil, nil
 	}
 
-	fileContent, err := ioutil.ReadFile(path)
+	fileContent, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -21,10 +20,6 @@ func GetFiltersFromFile(path string) (map[string]string, error) {
 	err = json.Unmarshal(fileContent, &payload)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(payload) == 0 {
-		return nil, errors.New("параметры не могут быть пустыми")
 	}
 
 	return payload, nil

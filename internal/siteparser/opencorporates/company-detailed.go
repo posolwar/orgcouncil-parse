@@ -24,7 +24,7 @@ func CompanyDetailConveer(ctx context.Context, in <-chan OpenCorporateCompanyLin
 		c.OnHTML(".registered_address", func(e *colly.HTMLElement) {
 			address := e.Text
 
-			if strings.Contains(address, detailedCompany[helpers.HeaderZip]) {
+			if strings.Contains(address, detailedCompany[helpers.HeaderZip][0:2]) {
 				zipConfirmed = true
 			}
 		})

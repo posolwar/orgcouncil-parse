@@ -2,6 +2,7 @@ package orgcouncil
 
 import (
 	"context"
+	"runtime"
 	"strconv"
 
 	"github.com/gocolly/colly"
@@ -18,7 +19,7 @@ type CityInfo struct {
 func CityConveer(ctx context.Context, in <-chan StateInfo) <-chan CityInfo {
 	c := collector.NewCollector()
 
-	cityInfoOut := make(chan CityInfo)
+	cityInfoOut := make(chan CityInfo, runtime.NumCPU())
 
 	go func() {
 		c.OnHTML(".table-condensed2 > tbody > tr", func(e *colly.HTMLElement) {
