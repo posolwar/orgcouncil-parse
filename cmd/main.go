@@ -27,7 +27,7 @@ func init() {
 
 	flag.StringVar(&CsvComma, "csv-comma", ":", "Разделитель, используемый для csv.")
 	flag.StringVar(&SaveDirectory, "dir", "", "Директория для сохранения файла")
-	flag.StringVar(&FilterFilePath, "file", "", "Путь к файлу, содержащего параметры в формате json для фильтрации по ним.")
+	flag.StringVar(&FilterFilePath, "filter", "", "Путь к файлу, содержащего параметры в формате json для фильтрации по ним.")
 
 	flag.StringVar(&States, "state", "", "Штат, используемый для поиска. Если не указан, то поиск выполняется по всем штатам. Можно указать несколько штатов через запятую.")
 }
@@ -79,11 +79,6 @@ func flagsValid() error {
 	// comma
 	if commaLen > 1 || commaLen == 0 {
 		return errors.New("разделитель должен состоять из одного символа")
-	}
-
-	// out file
-	if utf8.RuneCountInString(SaveDirectory) == 0 {
-		return errors.New("вы не указали имя файла, в который будет выводиться ответ")
 	}
 
 	return nil
