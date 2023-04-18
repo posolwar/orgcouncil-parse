@@ -21,7 +21,8 @@ const (
 	OpenCorporateCompanyLinkError = "Opencorporate link not found"
 
 	// Allowed domains
-	OrgAllowedDomain = "www.orgcouncil.com"
+	OrgAllowedDomain    = "www.orgcouncil.com"
+	OpencorporateDomain = "opencorporates.com"
 
 	AddressOrgCouncil    = "https://www.orgcouncil.com/"
 	AddressOpenCorporate = "https://opencorporates.com"

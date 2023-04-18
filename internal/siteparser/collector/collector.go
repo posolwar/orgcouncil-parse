@@ -8,6 +8,6 @@ import (
 // Клиент, который будет ходить по сайту
 func NewCollector() *colly.Collector {
 	return colly.NewCollector(
-		colly.AllowedDomains(helpers.OrgAllowedDomain),
+		colly.AllowedDomains(helpers.OrgAllowedDomain, helpers.OpencorporateDomain),
 	)
 }

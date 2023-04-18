@@ -14,7 +14,7 @@ import (
 
 func CreateConveer(ctx context.Context, dirPath string, stateFilter map[string]struct{}, paramFilter map[string]string, channelsCount int) {
 	var wg sync.WaitGroup
-	var outChannel = make(chan orgcouncil.CompanyDetailedInfo, runtime.NumCPU())
+	var outChannel = make(chan opencorporates.Details, runtime.NumCPU())
 
 	if err := csvcreater.CreateDir(dirPath); err != nil {
 		logrus.Errorf("ошибка создания каталога '%s', подробности: " + err.Error())
@@ -41,29 +41,33 @@ func CreateConveer(ctx context.Context, dirPath string, stateFilter map[string]s
 	wg.Wait()
 }
 
-func ToOut(in <-chan orgcouncil.CompanyDetailedInfo, out chan<- orgcouncil.CompanyDetailedInfo) {
+func ToOut(in <-chan opencorporates.Details, out chan<- opencorporates.Details) {
 	for inChan := range in {
 		out <- inChan
 	}
 }
 
-func toCsvWrite2(channelsCount int, wg *sync.WaitGroup, toWriteFile <-chan csvcreater.CsvToWrite, in <-chan orgcouncil.CompanyDetailedInfo) {
+func toCsvWrite2(channelsCount int, wg *sync.WaitGroup, toWriteFile <-chan csvcreater.CsvToWrite, in <-chan opencorporates.Details) {
 	for fileForWriter := range toWriteFile {
 		wg.Add(1)
 		go toCsvWrite(fileForWriter, wg, in)
 	}
 }
 
-func toCsvWrite(fileToWrite csvcreater.CsvToWrite, wg *sync.WaitGroup, ch <-chan orgcouncil.CompanyDetailedInfo) {
+func toCsvWrite(fileToWrite csvcreater.CsvToWrite, wg *sync.WaitGroup, ch <-chan opencorporates.Details) {
 	defer fileToWrite.File.Close()
 	defer wg.Done()
 
 	for detailedInfo := range ch {
 		fileToWrite.CsvWriter.Write([]string{"--------------------------------"})
 
-		slice := make([][]string, 0, len(detailedInfo))
+		slice := make([][]string, 0, len(detailedInfo.OpencorporateData)+len(detailedInfo.OrgcouncilMap))
 
-		for name, value := range detailedInfo {
+		for _, value := range detailedInfo.OpencorporateData {
+			slice = append(slice, value)
+		}
+
+		for name, value := range detailedInfo.OrgcouncilMap {
 			slice = append(slice, []string{name, value})
 		}
 
