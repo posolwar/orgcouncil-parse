@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/csvcreater"
-	"github.com/posolwar/orgcouncil-parse/internal/siteparser/opencorporates"
 	"github.com/posolwar/orgcouncil-parse/internal/siteparser/orgcouncil"
 	"github.com/sirupsen/logrus"
 )
@@ -31,9 +30,9 @@ func CreateConveer(ctx context.Context, dirPath string, stateFilter map[string]s
 		companyCh := orgcouncil.CompanyConveer(ctx, cityCh)
 		detailedCh := orgcouncil.CompanyDetailedConveer(ctx, companyCh)
 		fileteredCh := orgcouncil.FilteredConveer(ctx, paramFilter, detailedCh)
-		openCorpListCh := opencorporates.CompanyListConveer(ctx, fileteredCh)
-		openCorpDetailCh := opencorporates.CompanyDetailConveer(ctx, openCorpListCh)
-		go ToOut(openCorpDetailCh, outChannel)
+		// openCorpListCh := opencorporates.CompanyListConveer(ctx, fileteredCh)
+		// openCorpDetailCh := opencorporates.CompanyDetailConveer(ctx, openCorpListCh)
+		go ToOut(fileteredCh, outChannel)
 	}
 
 	toCsvWrite2(channelsCount, &wg, fileCh, outChannel)
