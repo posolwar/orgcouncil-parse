@@ -17,7 +17,7 @@ type StateInfo struct {
 
 // Конвеер для получения информации по штатам
 func StateConveer(ctx context.Context, directoryPath string, filtredStates map[string]struct{}) <-chan StateInfo {
-	c := collector.NewCollector()
+	c := collector.NewSyncCollector()
 
 	stateOutCh := make(chan StateInfo)
 
@@ -50,6 +50,8 @@ func StateConveer(ctx context.Context, directoryPath string, filtredStates map[s
 			logrus.Error(err)
 			ctx.Done()
 		}
+
+		c.Wait()
 
 		close(stateOutCh)
 	}()

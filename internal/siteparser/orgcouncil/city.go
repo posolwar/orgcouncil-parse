@@ -17,7 +17,7 @@ type CityInfo struct {
 
 // Получаем штат, отдаем информацию о городе
 func CityConveer(ctx context.Context, in <-chan StateInfo) <-chan CityInfo {
-	c := collector.NewCollector()
+	c := collector.NewSyncCollector()
 
 	cityInfoOut := make(chan CityInfo, runtime.NumCPU())
 
@@ -39,6 +39,8 @@ func CityConveer(ctx context.Context, in <-chan StateInfo) <-chan CityInfo {
 		for state := range in {
 			c.Visit(state.URL)
 		}
+
+		c.Wait()
 
 		close(cityInfoOut)
 	}()

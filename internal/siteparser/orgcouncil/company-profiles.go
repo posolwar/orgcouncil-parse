@@ -16,7 +16,7 @@ type CompanyProfileInfo struct {
 
 // Получение краткой информации о компаниях
 func CompanyConveer(ctx context.Context, in <-chan CityInfo) <-chan CompanyProfileInfo {
-	c := collector.NewCollector()
+	c := collector.NewSyncCollector()
 
 	out := make(chan CompanyProfileInfo, runtime.NumCPU())
 
@@ -39,6 +39,8 @@ func CompanyConveer(ctx context.Context, in <-chan CityInfo) <-chan CompanyProfi
 		for city := range in {
 			c.Visit(city.URL)
 		}
+
+		c.Wait()
 
 		close(out)
 	}()

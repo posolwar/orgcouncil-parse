@@ -12,8 +12,8 @@ import (
 )
 
 func CreateConveer(ctx context.Context, dirPath string, stateFilter map[string]struct{}, paramFilter map[string]string, channelsCount int) {
-	var wg sync.WaitGroup
 	var outChannel = make(chan orgcouncil.CompanyDetailedInfo, runtime.NumCPU())
+	defer close(outChannel)
 
 	if err := csvcreater.CreateDir(dirPath); err != nil {
 		logrus.Errorf("ошибка создания каталога '%s', подробности: " + err.Error())
@@ -24,20 +24,18 @@ func CreateConveer(ctx context.Context, dirPath string, stateFilter map[string]s
 	stateCh := orgcouncil.StateConveer(ctx, dirPath, stateFilter)
 	stateCh2, fileCh := FileCreateConveer(ctx, dirPath, stateCh)
 	cityCh := orgcouncil.CityConveer(ctx, stateCh2)
+	companyCh := orgcouncil.CompanyConveer(ctx, cityCh)
 
 	for i := 0; i < channelsCount; i++ {
 		// Каналы, который работают с большим кол-во информации
-		companyCh := orgcouncil.CompanyConveer(ctx, cityCh)
 		detailedCh := orgcouncil.CompanyDetailedConveer(ctx, companyCh)
 		fileteredCh := orgcouncil.FilteredConveer(ctx, paramFilter, detailedCh)
-		// openCorpListCh := opencorporates.CompanyListConveer(ctx, fileteredCh)
-		// openCorpDetailCh := opencorporates.CompanyDetailConveer(ctx, openCorpListCh)
+
+		// Собираем каналы для объединения вывода
 		go ToOut(fileteredCh, outChannel)
 	}
 
-	toCsvWrite2(channelsCount, &wg, fileCh, outChannel)
-
-	wg.Wait()
+	toFileWrite(channelsCount, fileCh, outChannel)
 }
 
 func ToOut(in <-chan orgcouncil.CompanyDetailedInfo, out chan<- orgcouncil.CompanyDetailedInfo) {
@@ -46,16 +44,20 @@ func ToOut(in <-chan orgcouncil.CompanyDetailedInfo, out chan<- orgcouncil.Compa
 	}
 }
 
-func toCsvWrite2(channelsCount int, wg *sync.WaitGroup, toWriteFile <-chan csvcreater.CsvToWrite, in <-chan orgcouncil.CompanyDetailedInfo) {
+func toFileWrite(channelsCount int, toWriteFile <-chan csvcreater.CsvToWrite, in chan orgcouncil.CompanyDetailedInfo) {
+	var wg sync.WaitGroup
+
 	for fileForWriter := range toWriteFile {
 		wg.Add(1)
-		go toCsvWrite(fileForWriter, wg, in)
+		go toCsvWrite(fileForWriter, &wg, in)
 	}
+
+	wg.Wait()
 }
 
 func toCsvWrite(fileToWrite csvcreater.CsvToWrite, wg *sync.WaitGroup, ch <-chan orgcouncil.CompanyDetailedInfo) {
-	defer fileToWrite.File.Close()
 	defer wg.Done()
+	defer fileToWrite.File.Close()
 
 	for detailedInfo := range ch {
 		fileToWrite.CsvWriter.Write([]string{"--------------------------------"})

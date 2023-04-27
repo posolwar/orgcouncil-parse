@@ -11,3 +11,11 @@ func NewCollector() *colly.Collector {
 		colly.AllowedDomains(helpers.OrgAllowedDomain),
 	)
 }
+
+func NewSyncCollector() *colly.Collector {
+	return colly.NewCollector(
+		colly.CacheDir("./cache-dir"),
+		colly.AllowedDomains(helpers.OrgAllowedDomain),
+		colly.Async(true),
+	)
+}
