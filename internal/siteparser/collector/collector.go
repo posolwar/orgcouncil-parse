@@ -14,7 +14,6 @@ func NewCollector() *colly.Collector {
 
 func NewSyncCollector() *colly.Collector {
 	return colly.NewCollector(
-		colly.CacheDir("./cache-dir"),
 		colly.AllowedDomains(helpers.OrgAllowedDomain),
 		colly.Async(true),
 	)
