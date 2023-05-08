@@ -10,7 +10,8 @@
             "request": "launch",
             "mode": "auto",
             "program": "${fileDirname}",
-            "args": ["-state", "Utah", "-dir", ".\\state\\alabama"],
+            "cwd": "${workspaceFolder}",
+            "args": ["-state", "Utah", "-dir", ".\\state\\alabama", "-filter", "./params.json"]
         }
     ]
 }

@@ -4,3 +4,6 @@
 
 # Debug file:
 ./cmd/*.exe
+
+# vscode dir
+.vscode/*.json

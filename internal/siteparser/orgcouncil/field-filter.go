@@ -2,6 +2,7 @@ package orgcouncil
 
 import (
 	"context"
+	"strings"
 )
 
 func Filtration(fieldName, fieldValue string) bool {
@@ -38,10 +39,26 @@ func FilteredConveer(ctx context.Context, filterParams map[string]string, in <-c
 	return out
 }
 
+func isWildcard(filter string) bool {
+	return strings.Contains(filter, "*")
+}
+
+func searchWildcard(field, filterWithoutWildcard string) bool {
+	return strings.Contains(field, filterWithoutWildcard)
+}
+
 func isFilterConfirmed(filterParams map[string]string, detail CompanyDetailedInfo) bool {
 	for paramName, paramValue := range filterParams {
-		if detail[paramName] != paramValue {
-			return false
+		paramWithoutStar := strings.ReplaceAll(paramValue, "*", "")
+
+		if isWildcard(paramValue) {
+			if !searchWildcard(detail[paramName], paramWithoutStar) {
+				return false
+			}
+		} else {
+			if detail[paramName] != paramValue {
+				return false
+			}
 		}
 	}
 
